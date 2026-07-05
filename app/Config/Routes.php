@@ -50,37 +50,21 @@ $routes->group('customer', ['namespace' => 'App\Controllers\Customer'], function
 // STAFF
 // ======================================================
 
-$routes->group('staff', [
-    'namespace' => 'App\Controllers',
-    // 'filter' => 'auth-staff',
-], function ($routes) {
+$routes->get('staff/login',  'Auth::staffLoginForm');
+$routes->post('staff/login', 'Auth::staffLoginAction');
+$routes->get('staff/logout', 'Auth::logout');
 
-    // Logout
-    $routes->post('logout', 'Auth::logout');
-
-    // Dashboard
-    $routes->get('/', 'Staff::index');
-
-    // Pesanan
-    $routes->get('orders', 'Staff::orders');
-
-    // Proses Laundry
-    $routes->get('processing', 'Staff::processing');
-    $routes->post('processing/update-stage', 'Staff::updateStage');
-
-    // Pelanggan
-    $routes->get('customers', 'Staff::customers');
-
-    // Notifikasi
-    $routes->get('notifications', 'Staff::notifications');
-    $routes->post('notifications/mark-all-read', 'Staff::markAllNotificationsRead');
-
-    // Profil
-    $routes->get('profile', 'Staff::profile');
-    $routes->post('profile/update', 'Staff::updateProfile');
-    $routes->post('profile/change-password', 'Staff::changePassword');
+$routes->group('staff', ['namespace' => 'App\Controllers\Staff'], function ($routes) {
+    $routes->get('/',                       'StaffController::index');
+    $routes->get('orders',                  'StaffController::orders');
+    $routes->post('orders/update-status',   'StaffController::updateStatus');
+    $routes->get('processing',              'StaffController::processing');
+    $routes->get('customers',               'StaffController::customers');
+    $routes->get('notifications',           'StaffController::notifications');
+    $routes->get('profile',                 'StaffController::profile');
+    $routes->post('profile/edit',           'StaffController::profileEditPost');
+    $routes->post('profile/change-password','StaffController::changePasswordPost');
 });
-
 
 // ======================================================
 // ADMIN / OWNER
