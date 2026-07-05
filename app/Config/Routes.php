@@ -53,6 +53,7 @@ $routes->group('customer', ['namespace' => 'App\Controllers\Customer'], function
 $routes->get('staff/login',  'Auth::staffLoginForm');
 $routes->post('staff/login', 'Auth::staffLoginAction');
 $routes->get('staff/logout', 'Auth::logout');
+$routes->post('staff/orders/delete/(:num)', 'Staff\StaffController::delete/$1');
 
 $routes->group('staff', ['namespace' => 'App\Controllers\Staff'], function ($routes) {
     $routes->get('/',                       'StaffController::index');

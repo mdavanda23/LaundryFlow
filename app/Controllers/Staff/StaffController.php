@@ -94,27 +94,7 @@ class StaffController extends BaseController
         ]);
     }
 
-    public function updateStatus()
-    {
-        $orderId   = $this->request->getPost('order_id');
-        $newStatus = $this->request->getPost('status');
 
-        $allowed = ['Pending','Received','Washing','Drying','Ironing','Ready','Completed','Cancelled'];
-        if (!in_array($newStatus, $allowed)) {
-            return redirect()->back()->with('error', 'Status tidak valid.');
-        }
-
-        $this->db->table('orders')->where('id', $orderId)->update(['status' => $newStatus]);
-
-        // Catat ke log
-        $this->db->table('order_status_logs')->insert([
-            'order_id'    => $orderId,
-            'status'      => $newStatus,
-            'description' => 'Status diubah oleh staff',
-        ]);
-
-        return redirect()->back()->with('success', 'Status berhasil diperbarui.');
-    }
 
     // ── PROCESSING (KANBAN) ───────────────────────────────────
     public function processing()
@@ -265,5 +245,66 @@ class StaffController extends BaseController
 
         return redirect()->to(site_url('staff/profile'))
             ->with('success', 'Password berhasil diubah.');
+    }
+    public function delete($id)
+    {
+        $order = $this->db->table('orders')->where('id', $id)->get()->getRowArray();
+
+        if (!$order) {
+            return redirect()->to('staff/orders')->with('error', 'Pesanan tidak ditemukan.');
+        }
+
+        $this->db->table('orders')->where('id', $id)->delete();
+
+        return redirect()->to('staff/orders')->with('success', 'Pesanan ' . $order['invoice'] . ' berhasil dihapus.');
+    }
+    public function updateStatus()
+    {
+        $orderId   = $this->request->getPost('order_id');
+        $newStatus = $this->request->getPost('status');
+
+        $allowed = ['Pending','Received','Washing','Drying','Ironing','Ready','Completed','Cancelled'];
+        if (!in_array($newStatus, $allowed)) {
+            return redirect()->back()->with('error', 'Status tidak valid.');
+        }
+
+        // Ambil data order (untuk tau customer_id & invoice)
+        $order = $this->db->table('orders')->where('id', $orderId)->get()->getRowArray();
+
+        if (!$order) {
+            return redirect()->back()->with('error', 'Pesanan tidak ditemukan.');
+        }
+
+        $this->db->table('orders')->where('id', $orderId)->update(['status' => $newStatus]);
+
+        // Catat ke log
+        $this->db->table('order_status_logs')->insert([
+            'order_id'    => $orderId,
+            'status'      => $newStatus,
+            'description' => 'Status diubah oleh staff',
+        ]);
+
+        // Buat pesan notifikasi sesuai status
+        $messages = [
+            'Received'  => 'Pesanan Anda telah diterima dan akan segera diproses.',
+            'Washing'   => 'Pesanan Anda sedang dalam proses pencucian.',
+            'Drying'    => 'Pesanan Anda sedang dalam proses pengeringan.',
+            'Ironing'   => 'Pesanan Anda sedang disetrika.',
+            'Ready'     => 'Pesanan Anda sudah siap diambil!',
+            'Completed' => 'Pesanan Anda telah selesai. Terima kasih!',
+            'Cancelled' => 'Pesanan Anda telah dibatalkan.',
+        ];
+
+        if (isset($messages[$newStatus])) {
+            $this->db->table('notifications')->insert([
+                'customer_id' => $order['customer_id'],
+                'title'       => 'Update Pesanan ' . $order['invoice'],
+                'message'     => $messages[$newStatus],
+                'is_read'     => 0,
+                'created_at'  => date('Y-m-d H:i:s'),
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Status berhasil diperbarui.');
     }
 }

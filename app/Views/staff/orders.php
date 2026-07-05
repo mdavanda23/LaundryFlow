@@ -61,6 +61,26 @@
                         <button type="submit" class="btn btn-primary btn-sm">Update</button>
                     </form>
                 </td>
+                <td>
+                <div style="display:flex;gap:6px;align-items:center">
+                    <form action="<?= site_url('staff/orders/update-status') ?>" method="POST" style="display:flex;gap:6px">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                        <select name="status" class="form-input" style="padding:4px 8px;font-size:11px;width:110px">
+                            <?php foreach(['Pending','Received','Washing','Drying','Ironing','Ready','Completed','Cancelled'] as $s): ?>
+                            <option value="<?= $s ?>" <?= $order['status']===$s?'selected':'' ?>><?= $s ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                    </form>
+
+                    <form action="<?= site_url('staff/orders/delete/'.$order['id']) ?>" method="POST"
+                          onsubmit="return confirm('Yakin ingin menghapus pesanan <?= esc($order['invoice']) ?>?')">
+                        <?= csrf_field() ?>
+                        <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
+                    </form>
+                </div>
+            </td>
             </tr>
             <?php endforeach; ?>
             <?php else: ?>
