@@ -32,18 +32,22 @@ class Auth extends BaseController
                 ->with('errors', $this->validator->getErrors());
         }
 
-        $insert = $this->userModel->registerCustomer([
+        $userId = $this->userModel->registerCustomer([
             'name'     => $this->request->getPost('name'),
             'email'    => trim($this->request->getPost('email')),
             'phone'    => $this->request->getPost('phone'),
             'password' => $this->request->getPost('password'),
         ]);
 
-        if (!$insert) {
+        if (!$userId) {
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Gagal membuat akun.');
         }
+
+        // Buat entri di tabel customers
+        $customerModel = new \App\Models\CustomerModel();
+        $customerModel->createForUser((int) $userId);
 
         return redirect()->to(site_url('customer/login'))
             ->with('success', 'Registrasi berhasil. Silakan login.');
@@ -84,6 +88,28 @@ class Auth extends BaseController
 
         return redirect()->to(site_url('customer'))
             ->with('success', 'Selamat datang, ' . $user['name']);
+    }
+
+    private function attemptLogin(int $roleId): ?array
+    {
+        $email    = trim((string) $this->request->getPost('email'));
+        $password = (string) $this->request->getPost('password');
+
+        if (!$email || !$password) {
+            return null;
+        }
+
+        $user = $this->userModel->findActiveByEmailAndRole($email, $roleId);
+
+        if (!$user) {
+            return null;
+        }
+
+        if (!$this->userModel->verifyPassword($password, $user['password'])) {
+            return null;
+        }
+
+        return $user;
     }
 
     // =====================================================

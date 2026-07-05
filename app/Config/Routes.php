@@ -18,53 +18,27 @@ $routes->get('/', 'LandingPage::index');
 // ======================================================
 
 // Register Customer
+// ── Customer Auth ────────────────────────────────────────────
+$routes->get('customer/login',    'Auth::customerLoginForm');
+$routes->post('customer/login',   'Auth::customerLoginAction');
 $routes->get('customer/register', 'Auth::registerForm');
-$routes->post('customer/register', 'Auth::registerAction');
+$routes->post('customer/register','Auth::registerAction');
+$routes->get('customer/logout',   'Auth::logout');
 
-// Login Customer
-$routes->get('customer/login', 'Auth::customerLoginForm');
-$routes->post('customer/login', 'Auth::customerLoginAction');
-
-// Login Staff
-$routes->get('staff/login', 'Auth::staffLoginForm');
-$routes->post('staff/login', 'Auth::staffLoginAction');
-
-// Login Admin / Owner
-$routes->get('admin/login', 'Auth::ownerLoginForm');
-$routes->post('admin/login', 'Auth::ownerLoginAction');
-
-
-// ======================================================
-// CUSTOMER
-// ======================================================
-
-$routes->group('customer', [
-    'namespace' => 'App\Controllers\Customer',
-    // 'filter' => 'auth-customer',
-], function ($routes) {
-
-    // Logout
-    $routes->post('logout', '\App\Controllers\Auth::logout');
-
-    // Dashboard
-    $routes->get('/', 'CustomerController::index');
-
-    // Pesanan Baru
-    $routes->get('new-order', 'CustomerController::newOrder');
-    $routes->post('new-order', 'CustomerController::storeOrder');
-
-    // Tracking
-    $routes->get('track', 'CustomerController::track');
-
-    // Riwayat
-    $routes->get('history', 'CustomerController::history');
-
-    // Notifikasi
+// ── Customer Dashboard (semua pakai namespace Customer) ──────
+$routes->group('customer', ['namespace' => 'App\Controllers\Customer'], function ($routes) {
+    $routes->get('/',              'CustomerController::index');
+    $routes->get('new-order',     'CustomerController::newOrder');
+    $routes->get('track',         'CustomerController::track');
+    $routes->get('history',       'CustomerController::history');
     $routes->get('notifications', 'CustomerController::notifications');
 
-    // Profil
-    $routes->get('profile', 'CustomerController::profile');
-    $routes->post('profile/update', 'CustomerController::updateProfile');
+    // Profile
+    $routes->get('profile',                   'ProfileController::index');
+    $routes->get('profile/edit',              'ProfileController::edit');
+    $routes->post('profile/edit',             'ProfileController::editPost');
+    $routes->get('profile/change-password',   'ProfileController::changePassword');
+    $routes->post('profile/change-password',  'ProfileController::changePasswordPost');
 });
 
 

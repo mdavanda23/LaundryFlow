@@ -6,23 +6,38 @@ use App\Controllers\BaseController;
 
 class CustomerController extends BaseController
 {
-    public function index()
+   public function index()
     {
+        $sess      = session()->get('customer');
+        $custModel = new \App\Models\CustomerModel();
+        $customer  = $custModel->getByUserId((int) $sess['id']);
+
+        // Ambil order aktif (bukan Completed/Cancelled)
+        $db           = \Config\Database::connect();
+        $currentOrder = $db->table('orders o')
+            ->select('o.*, s.name as service_name')
+            ->join('services s', 's.id = o.service_id')
+            ->where('o.customer_id', $customer['id'])
+            ->whereNotIn('o.status', ['Completed', 'Cancelled'])
+            ->orderBy('o.created_at', 'DESC')
+            ->limit(1)
+            ->get()->getRowArray();
+
+        // Ambil 3 order terbaru
+        $recentOrders = $db->table('orders o')
+            ->select('o.*, s.name as service_name')
+            ->join('services s', 's.id = o.service_id')
+            ->where('o.customer_id', $customer['id'])
+            ->orderBy('o.created_at', 'DESC')
+            ->limit(3)
+            ->get()->getResultArray();
+
         $data = [
-            'title'        => 'Home - LaundryFlow',
-            'user'         => ['name' => 'Ramdan Moo'],
-            'current_order' => [
-                'id'       => '#LF-2041',
-                'status'   => 'Washing',
-                'progress' => 60,
-                'finish'   => 'Today · 4:30 PM',
-            ],
-            'recent_orders' => [
-                ['id' => '#LF-2041', 'type' => 'Wash & Iron', 'weight' => '4.2kg', 'date' => 'Today',     'status' => 'Processing'],
-                ['id' => '#LF-2039', 'type' => 'Express',     'weight' => '2.0kg', 'date' => 'Yesterday', 'status' => 'Ready'],
-                ['id' => '#LF-2032', 'type' => 'Regular',     'weight' => '6.5kg', 'date' => '12 Jun',    'status' => 'Completed'],
-            ],
-            'promo' => [
+            'title'         => 'Home - LaundryFlow',
+            'user'          => ['name' => $sess['name']],
+            'current_order' => $currentOrder,
+            'recent_orders' => $recentOrders,
+            'promo'         => [
                 'text' => 'Get 25% off Express service',
                 'code' => 'FRESH25',
             ],
@@ -30,25 +45,35 @@ class CustomerController extends BaseController
 
         return view('customer/home', $data);
     }
-    
+        
+    // Tambah di __construct() CustomerController
     public function __construct()
     {
         helper(['form', 'url']);
+
+        if (!session()->has('customer')) {
+            redirect()->to(site_url('customer/login'))->send();
+            exit;
+        }
     }
     
     public function newOrder()
     {
-        $data = [
-            'title'    => 'New order - LaundryFlow',
-            'services' => [
-                ['key' => 'regular',   'label' => 'Regular',    'desc' => 'Standard wash · 24h',  'price' => '$2.5/kg', 'icon' => '👕'],
-                ['key' => 'express',   'label' => 'Express',    'desc' => 'Ready in 6 hours',     'price' => '$4.0/kg', 'icon' => '⚡'],
-                ['key' => 'wash_iron', 'label' => 'Wash & Iron','desc' => 'Cleaned + pressed',    'price' => '$3.5/kg', 'icon' => '✨'],
-                ['key' => 'iron_only', 'label' => 'Iron Only',  'desc' => 'Crisp & wrinkle-free', 'price' => '$1.5/kg', 'icon' => '🔥'],
-            ],
-        ];
+        $sess      = session()->get('customer');
+        $custModel = new \App\Models\CustomerModel();
+        $customer  = $custModel->getByUserId($sess['id']);
 
-        return view('customer/new_order', $data);
+        $db       = \Config\Database::connect();
+        $services = $db->table('services')
+            ->select('id, name, description, price_per_kg, duration, icon')  // ← eksplisit select id
+            ->where('status', 'active')
+            ->get()->getResultArray();
+
+        return view('customer/new_order', [
+            'title'            => 'Pesanan Baru - LaundryFlow',
+            'services'         => $services,
+            'customer_address' => $customer['address'] ?? '',
+        ]);
     }
 
     public function track()
@@ -77,34 +102,39 @@ class CustomerController extends BaseController
 
     public function history()
     {
-        $data = [
-            'title'  => 'History - LaundryFlow',
-            'orders' => [
-                ['inv' => 'INV-2041', 'type' => 'Wash & Iron', 'date' => 'Today',    'total' => '$15.75', 'status' => 'Processing'],
-                ['inv' => 'INV-2039', 'type' => 'Express',     'date' => 'Yesterday','total' => '$18.40', 'status' => 'Ready'],
-                ['inv' => 'INV-2032', 'type' => 'Regular',     'date' => '12 Jun',   'total' => '$22.10', 'status' => 'Completed'],
-                ['inv' => 'INV-2028', 'type' => 'Iron Only',   'date' => '08 Jun',   'total' => '$9.00',  'status' => 'Completed'],
-                ['inv' => 'INV-2021', 'type' => 'Wash & Iron', 'date' => '03 Jun',   'total' => '$14.50', 'status' => 'Cancelled'],
-            ],
-        ];
+        $customerId = $this->getCustomerId();
+        $db         = \Config\Database::connect();
 
-        return view('customer/history', $data);
+        $orders = $db->table('orders o')
+            ->select('o.id, o.invoice, o.weight, o.status, o.total, o.created_at, s.name as service_name')
+            ->join('services s', 's.id = o.service_id')
+            ->where('o.customer_id', $customerId)
+            ->orderBy('o.created_at', 'DESC')
+            ->get()->getResultArray();
+
+        return view('customer/history', [
+            'title'  => 'Riwayat - LaundryFlow',
+            'orders' => $orders,
+        ]);
     }
 
     public function notifications()
     {
-        $data = [
-            'title'         => 'Notifications - LaundryFlow',
-            'unread_count'  => 2,
-            'notifications' => [
-                ['icon' => 'wash',    'title' => 'Laundry is now washing', 'desc' => 'Order #LF-2041 entered the wash cycle.',  'time' => 'Just now',  'unread' => true],
-                ['icon' => 'ready',   'title' => 'Laundry is ready',       'desc' => 'Order #LF-2039 ready for pickup.',        'time' => '1h ago',    'unread' => true],
-                ['icon' => 'payment', 'title' => 'Payment received',       'desc' => '$18.40 received for order #LF-2039.',     'time' => '3h ago',    'unread' => false],
-                ['icon' => 'promo',   'title' => 'Promo unlocked',         'desc' => 'Enjoy 25% off Express service today.',    'time' => 'Yesterday', 'unread' => false],
-                ['icon' => 'order',   'title' => 'Order received',         'desc' => 'We picked up your laundry order #LF-2041.','time' => 'Yesterday', 'unread' => false],
-            ],
-        ];
+        $customerId = $this->getCustomerId();
+        $db         = \Config\Database::connect();
 
-        return view('customer/notifications', $data);
+        $notifications = $db->table('notifications')
+            ->select('id, customer_id, title, message, is_read, created_at')  // ← eksplisit
+            ->where('customer_id', $customerId)
+            ->orderBy('created_at', 'DESC')
+            ->get()->getResultArray();
+
+        $unreadCount = count(array_filter($notifications, fn($n) => !$n['is_read']));
+
+        return view('customer/notifications', [
+            'title'         => 'Notifikasi - LaundryFlow',
+            'notifications' => $notifications,
+            'unread_count'  => $unreadCount,
+        ]);
     }
 }
