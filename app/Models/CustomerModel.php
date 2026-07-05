@@ -6,40 +6,47 @@ use CodeIgniter\Model;
 
 class CustomerModel extends Model
 {
-    protected $table            = 'customers';
-    protected $primaryKey       = 'id';
+    protected $table = 'customers';
+    protected $primaryKey = 'id';
+
+    protected $returnType = 'array';
+
     protected $useAutoIncrement = true;
-    protected $returnType       = 'array';
-    protected $useTimestamps    = true;
-    protected $createdField     = 'created_at';
-    protected $updatedField     = 'updated_at';
+
+    protected $useTimestamps = true;
+
+    protected $createdField = 'created_at';
+
+    protected $updatedField = 'updated_at';
 
     protected $allowedFields = [
-        'user_id', 'address', 'gender', 'birth_date', 'points',
+        'user_id',
+        'address',
+        'gender',
+        'birth_date',
+        'points'
     ];
 
     /**
-     * Ambil data customer lengkap beserta data user-nya.
+     * Ambil customer berdasarkan user_id
      */
     public function getByUserId(int $userId): ?array
     {
-        return $this->db->table('customers c')
-            ->select('c.*, u.name, u.email, u.phone, u.photo, u.role_id, u.created_at as joined_at')
-            ->join('users u', 'u.id = c.user_id')
-            ->where('c.user_id', $userId)
-            ->get()
-            ->getRowArray();
+        return $this->select('customers.*, users.name, users.email, users.phone, users.photo, users.role_id')
+            ->join('users', 'users.id = customers.user_id')
+            ->where('customers.user_id', $userId)
+            ->first();
     }
 
     /**
-     * Buat entri customer baru setelah register user.
+     * Membuat data customer setelah register
      */
-    public function createForUser(int $userId): int|string|false
+    public function createForUser(int $userId)
     {
         return $this->insert([
             'user_id' => $userId,
             'address' => '',
-            'points'  => 0,
+            'points' => 0,
         ]);
     }
 }

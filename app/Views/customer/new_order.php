@@ -6,9 +6,12 @@
     <h1 class="page-title">Buat Pesanan Baru</h1>
     <p class="page-sub">Pilih layanan, masukkan berat dan alamat penjemputan.</p>
 
-    <?php if (session()->getFlashdata('errors')): ?>
+    <?php if (session()->getFlashdata('errors') || !!session()->getFlashdata('error')): ?>
     <div style="background:#FEE2E2;color:#991B1B;padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px">
-        <?php foreach(session()->getFlashdata('errors') as $e): ?>
+        <?php 
+        $errors = session()->getFlashdata('errors') ?: (session()->getFlashdata('error') ? [session()->getFlashdata('error')] : []);
+        foreach((array)$errors as $e): 
+        ?>
             <div>• <?= esc($e) ?></div>
         <?php endforeach; ?>
     </div>
@@ -17,15 +20,17 @@
     <form action="<?= site_url('customer/new-order') ?>" method="POST" id="order-form">
         <?= csrf_field() ?>
 
-        <!-- Pilih Layanan -->
         <div class="form-section">
             <label class="form-label">Pilih Layanan</label>
             <div class="service-grid">
                 <?php foreach ($services as $i => $service): ?>
-                <label class="service-card <?= $i === 0 ? 'selected' : '' ?>">
+                <?php 
+                $is_checked = (old('service_id') == $service['id']) || (empty(old('service_id')) && $i === 0);
+                ?>
+                <label class="service-card <?= $is_checked ? 'selected' : '' ?>">
                     <input type="radio" name="service_id"
                            value="<?= esc($service['id']) ?>"
-                           <?= $i === 0 ? 'checked' : '' ?>>
+                           <?= $is_checked ? 'checked' : '' ?>>
                     <span class="service-icon"><?= esc($service['icon']) ?></span>
                     <span class="service-name"><?= esc($service['name']) ?></span>
                     <span class="service-desc"><?= esc($service['description']) ?></span>
@@ -37,7 +42,6 @@
             </div>
         </div>
 
-        <!-- Berat -->
         <div class="form-section">
             <label class="form-label" for="weight">Estimasi Berat (kg)</label>
             <input type="number" id="weight" name="weight" class="form-input"
@@ -46,7 +50,6 @@
                    style="padding:12px 14px">
         </div>
 
-        <!-- Estimasi Harga -->
         <div class="form-section" id="price-preview" style="display:none">
             <div style="background:#EFF9FB;border-radius:10px;padding:12px 14px;border:1px solid #A5F3FC">
                 <p style="font-size:12px;color:#64748B;margin-bottom:2px">Estimasi Total</p>
@@ -54,7 +57,6 @@
             </div>
         </div>
 
-        <!-- Alamat Penjemputan -->
         <div class="form-section">
             <label class="form-label" for="address">Alamat Penjemputan</label>
             <div class="input-icon-wrap">
@@ -63,12 +65,11 @@
                     <circle cx="12" cy="9" r="2.5"/>
                 </svg>
                 <input type="text" id="address" name="address" class="form-input has-icon"
-                       placeholder="Masukkan alamat lengkap"
+                       placeholder="Masukkan alamat lengkap (Minimal 5 karakter)"
                        value="<?= old('address', $customer_address ?? '') ?>" required>
             </div>
         </div>
 
-        <!-- Catatan Khusus -->
         <div class="form-section">
             <label class="form-label" for="notes">Catatan Khusus</label>
             <textarea id="notes" name="notes" class="form-textarea" rows="3"
@@ -112,6 +113,11 @@ document.querySelectorAll('.service-card input[type=radio]').forEach(radio => {
 });
 
 document.getElementById('weight').addEventListener('input', hitungHarga);
+
+// Jalankan kalkulasi saat halaman pertama kali dibuka untuk mendeteksi old value / default value
+document.addEventListener("DOMContentLoaded", function() {
+    hitungHarga();
+});
 </script>
 
 <?= $this->endSection() ?>

@@ -28,10 +28,14 @@ $routes->get('customer/logout',   'Auth::logout');
 // ── Customer Dashboard (semua pakai namespace Customer) ──────
 $routes->group('customer', ['namespace' => 'App\Controllers\Customer'], function ($routes) {
     $routes->get('/',              'CustomerController::index');
-    $routes->get('new-order',     'CustomerController::newOrder');
-    $routes->get('track',         'CustomerController::track');
-    $routes->get('history',       'CustomerController::history');
-    $routes->get('notifications', 'CustomerController::notifications');
+    $routes->get('new-order',      'CustomerController::newOrder');
+    $routes->post('new-order',     'CustomerController::newOrder');
+    $routes->get('payment/(:num)',  'CustomerController::payment/$1');
+    $routes->post('payment/(:num)', 'CustomerController::processPayment/$1');
+    $routes->get('payment-success/(:num)', 'CustomerController::paymentSuccess/$1'); // <-- baru
+    $routes->get('track',          'CustomerController::track');
+    $routes->get('history',        'CustomerController::history');
+    $routes->get('notifications',  'CustomerController::notifications');
 
     // Profile
     $routes->get('profile',                   'ProfileController::index');

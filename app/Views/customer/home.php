@@ -19,21 +19,32 @@
 <!-- Current Order Card -->
 <?php if ($current_order): ?>
 <?php
+// Skema progress: Diterima 10% -> naik 20% tiap tahap -> Selesai 100%
 $progressMap = [
-    'Pending'   => 10,
-    'Received'  => 25,
-    'Washing'   => 50,
-    'Drying'    => 65,
-    'Ironing'   => 80,
-    'Ready'     => 95,
-    'Completed' => 100,
+    'Diterima'     => 10,
+    'Dicuci'       => 30,
+    'Dikeringkan'  => 50,
+    'Disetrika'    => 70,
+    'Siap Diambil' => 90,
+    'Selesai'      => 100,
 ];
 $pct = $progressMap[$current_order['status']] ?? 0;
+
+// Label badge Bahasa Indonesia
+$badgeLabelMap = [
+    'Diterima'     => 'Diterima',
+    'Dicuci'       => 'Sedang Dicuci',
+    'Dikeringkan'  => 'Sedang Dikeringkan',
+    'Disetrika'    => 'Sedang Disetrika',
+    'Siap Diambil' => 'Siap Diambil',
+    'Selesai'      => 'Selesai',
+];
+$badgeLabel = $badgeLabelMap[$current_order['status']] ?? $current_order['status'];
 ?>
 <div class="current-order-card">
     <div class="order-card-top">
         <span class="label-small">PESANAN BERJALAN</span>
-        <span class="badge-status"><?= esc($current_order['status']) ?></span>
+        <span class="badge-status"><?= esc($badgeLabel) ?></span>
     </div>
     <h2 class="order-id"><?= esc($current_order['invoice']) ?></h2>
     <div class="progress-row">
@@ -125,20 +136,21 @@ $pct = $progressMap[$current_order['status']] ?? 0;
 
 <div class="orders-list">
     <?php if (!empty($recent_orders)): ?>
+        <?php
+        // Map status DB (Bahasa Indonesia) ke label & class tampilan
+        $statusMap = [
+            'Diterima'     => ['label' => 'Diterima',         'class' => 'processing'],
+            'Dicuci'       => ['label' => 'Sedang Dicuci',    'class' => 'processing'],
+            'Dikeringkan'  => ['label' => 'Sedang Dikeringkan','class' => 'processing'],
+            'Disetrika'    => ['label' => 'Sedang Disetrika', 'class' => 'processing'],
+            'Siap Diambil' => ['label' => 'Siap Diambil',     'class' => 'ready'],
+            'Selesai'      => ['label' => 'Selesai',          'class' => 'completed'],
+            'Cancelled'    => ['label' => 'Dibatalkan',       'class' => 'cancelled'],
+        ];
+        ?>
         <?php foreach ($recent_orders as $order): ?>
         <?php
-        // Map status DB ke label & class Indonesia
-        $statusMap = [
-            'pending'   => ['label' => 'Menunggu',    'class' => 'processing'],
-            'received'  => ['label' => 'Diterima',    'class' => 'processing'],
-            'washing'   => ['label' => 'Dicuci',      'class' => 'processing'],
-            'drying'    => ['label' => 'Dikeringkan', 'class' => 'processing'],
-            'ironing'   => ['label' => 'Disetrika',   'class' => 'processing'],
-            'ready'     => ['label' => 'Siap Diambil','class' => 'ready'],
-            'completed' => ['label' => 'Selesai',     'class' => 'completed'],
-            'cancelled' => ['label' => 'Dibatalkan',  'class' => 'cancelled'],
-        ];
-        $statusKey   = strtolower($order['status']);
+        $statusKey   = $order['status'];
         $statusLabel = $statusMap[$statusKey]['label'] ?? $order['status'];
         $statusClass = $statusMap[$statusKey]['class'] ?? 'processing';
         ?>

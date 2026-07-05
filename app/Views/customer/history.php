@@ -27,21 +27,23 @@
 <div class="history-list" id="history-list">
 
     <?php if (!empty($orders)): ?>
+        <?php
+        // Map status DB (Bahasa Indonesia) ke label & class tampilan
+        $statusMap = [
+            'Diterima'     => ['label' => 'Diterima',         'class' => 'processing'],
+            'Dicuci'       => ['label' => 'Sedang Dicuci',    'class' => 'processing'],
+            'Dikeringkan'  => ['label' => 'Sedang Dikeringkan','class' => 'processing'],
+            'Disetrika'    => ['label' => 'Sedang Disetrika', 'class' => 'processing'],
+            'Siap Diambil' => ['label' => 'Siap Diambil',     'class' => 'ready'],
+            'Selesai'      => ['label' => 'Selesai',          'class' => 'completed'],
+            'Cancelled'    => ['label' => 'Dibatalkan',       'class' => 'cancelled'],
+        ];
+        ?>
         <?php foreach ($orders as $order): ?>
         <?php
-        $statusMap = [
-            'pending'   => ['label' => 'Menunggu',       'class' => 'processing'],
-            'received'  => ['label' => 'Diterima',       'class' => 'processing'],
-            'washing'   => ['label' => 'Dicuci',         'class' => 'processing'],
-            'drying'    => ['label' => 'Dikeringkan',    'class' => 'processing'],
-            'ironing'   => ['label' => 'Disetrika',      'class' => 'processing'],
-            'ready'     => ['label' => 'Siap Diambil',   'class' => 'ready'],
-            'completed' => ['label' => 'Selesai',        'class' => 'completed'],
-            'cancelled' => ['label' => 'Dibatalkan',     'class' => 'cancelled'],
-        ];
-        $key         = strtolower($order['status']);
-        $statusLabel = $statusMap[$key]['label'] ?? $order['status'];
-        $statusClass = $statusMap[$key]['class'] ?? 'processing';
+        $statusKey   = $order['status'];
+        $statusLabel = $statusMap[$statusKey]['label'] ?? $order['status'];
+        $statusClass = $statusMap[$statusKey]['class'] ?? 'processing';
         ?>
         <div class="history-item">
             <div class="history-info">
