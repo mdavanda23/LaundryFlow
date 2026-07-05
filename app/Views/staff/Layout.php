@@ -121,7 +121,6 @@
             ['href' => 'staff/orders',       'label' => 'Orders',        'icon' => '<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/>'],
             ['href' => 'staff/processing',   'label' => 'Processing',    'icon' => '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>'],
             ['href' => 'staff/customers',    'label' => 'Customers',     'icon' => '<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>'],
-            ['href' => 'staff/notifications','label' => 'Notifications', 'icon' => '<path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>'],
             ['href' => 'staff/profile',      'label' => 'Profile',       'icon' => '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>'],
         ];
         foreach ($navs as $nav):

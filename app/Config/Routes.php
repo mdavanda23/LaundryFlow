@@ -70,30 +70,25 @@ $routes->group('staff', ['namespace' => 'App\Controllers\Staff'], function ($rou
 // ADMIN / OWNER
 // ======================================================
 
-$routes->group('admin', [
-    'namespace' => 'App\Controllers',
-    // 'filter' => 'auth-admin',
-], function ($routes) {
+// ── Admin Auth ───────────────────────────────────────────────
+$routes->get('admin/login',  'Auth::ownerLoginForm');
+$routes->post('admin/login', 'Auth::ownerLoginAction');
+$routes->get('admin/logout', 'Auth::logout');
 
-    // Logout
-    $routes->post('logout', 'Auth::logout');
-
-    // Dashboard
-    $routes->get('/', 'Admin::index');
-    $routes->get('dashboard', 'Admin::dashboard');
-
-    // User Management
-    $routes->get('users', 'Admin::users');
-
-    // Staff Management
-    $routes->get('staff', 'Admin::staff');
-
-    // Customer Management
-    $routes->get('customers', 'Admin::customers');
-
-    // Laporan
-    $routes->get('reports', 'Admin::reports');
-
-    // Pengaturan
-    $routes->get('settings', 'Admin::settings');
+// ── Admin Panel ──────────────────────────────────────────────
+$routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function ($routes) {
+    $routes->get('/',                      'AdminController::index');
+    $routes->get('services',               'AdminController::services');
+    $routes->post('services',              'AdminController::serviceStore');
+    $routes->post('services/update/(:num)','AdminController::serviceUpdate/$1');
+    $routes->get('services/delete/(:num)', 'AdminController::serviceDelete/$1');
+    $routes->get('prices',                 'AdminController::prices');
+    $routes->post('prices/update/(:num)',  'AdminController::priceUpdate/$1');
+    $routes->get('users',                  'AdminController::users');
+    $routes->get('users/toggle/(:num)',    'AdminController::userToggleStatus/$1');
+    $routes->get('users/delete/(:num)',    'AdminController::userDelete/$1');
+    $routes->get('reports',                'AdminController::reports');
+    $routes->get('notifications',          'AdminController::notifications');
+    $routes->get('settings',               'AdminController::settings');
+    $routes->post('settings',              'AdminController::settingsUpdate');
 });
